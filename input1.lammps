@@ -1,0 +1,46 @@
+# PART A - ENERGY MINIMIZATION
+ # 1) Initialization
+	units lj #defines units as LJ, which are unitless
+	dimension 3 #doing a 3D simulation
+	atom_style atomic #tells it what attributes are associated with atoms
+	pair_style lj/cut 2.5 #LJ cut-off distance
+	boundary p p p #PBC
+ # 2) System definition
+ 	region simulation_box block -2.6 2.6 -2.6 2.6 -2.6 2.6 #orthogonal cube box
+        create_box 1 simulation_box #creates simulation box based on 'simulation_box' variable and with 1 types of atoms
+	create_atoms 1 random 108 341341 simulation_box #creates 108 atoms of type 1  with a random seed
+
+ # 3) Simulation settings
+ 	mass 1 1 #sets mass of atom type 1 to 1 (unitless)
+	pair_coeff 1 1 1.0 1.0 # atom type
+
+	neigh_modify every 1 delay 5 check yes #rebuilds neighbor lists more often			
+				# uses geometric averaging for 1 2 interaction, unless specified
+ # 4) Visualization
+ 	thermo 10 #asks lammps to print thermodynamic info (temp., energy) in terminal every 10 steps
+ # 5) Run
+	minimize 1.0e-4 1.0e-6 1000 10000 #perform energy minimization using conjugate Gradient algorithm
+	write_data *.data
+
+#4 stopping criteria in minimize
+# (1) change in energy between two iterations is less than 1.0e-4 
+# (2) maximum force between two atoms in the system is lower than 1.0e-6
+# (3) maximum number of iterations is 1000
+# (4) maximum number of times the force and energy have been evaluated is 10000
+
+
+#Part B -MOLECULAR DYNAMICS
+# 4) Visualization
+thermo 10 #since thermo called twice, new value is 1000
+variable kinetic_energy equal ke #assigns variable "kinetic_energy" equal to the kinetic energy of the system
+dump mydmp all custom 10 dump.lammpstrj id type x y z
+variable potential_energy equal pe
+variable volume equal vol 
+fix myat1 all ave/time 1 1 1 v_kinetic_energy v_potential_energy v_volume file energy.dat #prints values in energy.dat
+
+# 5) Run
+velocity all create 0.85 12345 units box
+fix mynve all nve #update positions and velocities of the atoms in the group all
+timestep 0.005
+run 1000 #runs a simulation of 10000 steps
+
